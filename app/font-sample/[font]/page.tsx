@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
@@ -18,8 +16,9 @@ const passage = [
   'When Aunt Em came there she was a young, pretty wife. The sun and wind had changed her, too. They had taken the sparkle from her eyes and left them a sober gray; they had taken the red from her cheeks and lips, and they were gray also.',
 ] as const
 
-export default function FontSample({ params }: { params: { font: string } }) {
-  const font = samples[params.font as keyof typeof samples] ?? samples.atkinson
+export default async function FontSample({ params }: { params: Promise<{ font: string }> }) {
+  const { font: fontId } = await params
+  const font = samples[fontId as keyof typeof samples] ?? samples.atkinson
   return <main className="sample-page">
     <header className="sample-header"><Link className="back-link" href="/"><ArrowLeft data-icon="inline-start" /> Back to dyslexify</Link><span>Reading preview</span></header>
     <article className={`sample-reading ${font.className}`}>
