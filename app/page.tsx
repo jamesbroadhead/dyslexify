@@ -5,6 +5,7 @@ import { useRef, useState } from 'react'
 import { Check, Download, FileArchive, FileText, Heart, Info, LoaderCircle, LockKeyhole, Sparkles, Upload, X } from 'lucide-react'
 
 type FontChoice = 'atkinson' | 'opendyslexic' | 'lexend' | 'all'
+type OutputFormat = 'epub' | 'azw3'
 type Result = { name: string; url: string; font: string }
 
 const choices: { id: FontChoice; name: string; detail: string; sample: string }[] = [
@@ -19,6 +20,7 @@ export default function Home() {
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState('')
   const [processing, setProcessing] = useState<FontChoice | null>(null)
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>('epub')
   const [progress, setProgress] = useState('')
   const [results, setResults] = useState<Result[]>([])
 
@@ -29,6 +31,10 @@ export default function Home() {
 
   async function convert(font: FontChoice) {
     if (!file) return
+    if (outputFormat === 'azw3') {
+      setError('AZW3/KF8 export is not available yet. Choose EPUB, which preserves the embedded font in a browser-created file.')
+      return
+    }
     setError(''); setProcessing(font); setProgress(font === 'all' ? 'Preparing three accessible editions…' : 'Inspecting your ebook…')
     try {
       const source = await JSZip.loadAsync(await file.arrayBuffer())
@@ -68,7 +74,7 @@ export default function Home() {
       {progress && !processing && <div className="sample-loading">{progress}</div>}
       {error && <div className="error"><X />{error}</div>}
       <div className="step second"><span className="step-number">02</span><div><h2>Choose your reading font</h2><p>We&apos;ll create a clean, comfortable edition for you.</p></div></div>
-      <div className="font-grid">{choices.map(choice => <div key={choice.id} className="font-card" style={{ fontFamily: choice.id === 'atkinson' ? '"Atkinson Hyperlegible", sans-serif' : choice.id === 'lexend' ? 'Lexend, sans-serif' : '"OpenDyslexic", "Comic Sans MS", sans-serif' }}><button className="font-card-main" disabled={!!processing} onClick={() => convert(choice.id)}><span className={`font-preview ${choice.id}`} aria-hidden="true">Aa</span><span className="font-card-copy"><strong className={`font-name ${choice.id}`}>{choice.name}</strong><small>{choice.detail}</small><i>{choice.sample}</i></span><span className="arrow">→</span></button><a className="font-info" href={`/font-sample/${choice.id}`} aria-label={`Read a sample in ${choice.name}`}><Info /></a></div>)}<div className="font-card all-card" style={{ fontFamily: '"Atkinson Hyperlegible", sans-serif' }}><button className="font-card-main" disabled={!!processing} onClick={() => convert('all')}><span className="font-preview all-preview"><Sparkles /></span><span className="font-card-copy"><strong>Generate all 3</strong><small>Try every font and choose your favorite</small><i>Three polished editions, one download</i></span><span className="arrow">→</span></button></div></div>
+      <div className="format-section"><div><h3>Output format</h3><p>Choose the format for your accessible edition.</p></div><div className="format-options" role="radiogroup" aria-label="Output format"><button type="button" className={`format-option ${outputFormat === 'epub' ? 'is-selected' : ''}`} aria-pressed={outputFormat === 'epub'} onClick={() => { setOutputFormat('epub'); setError('') }}><strong>EPUB</strong><span>Works across most reading apps</span></button><button type="button" className={`format-option ${outputFormat === 'azw3' ? 'is-selected' : ''}`} aria-pressed={outputFormat === 'azw3'} onClick={() => setOutputFormat('azw3')}><strong>AZW3 / KF8</strong><span>Kindle format · browser export coming soon</span></button></div></div><div className="font-grid">{choices.map(choice => <div key={choice.id} className="font-card" style={{ fontFamily: choice.id === 'atkinson' ? '"Atkinson Hyperlegible", sans-serif' : choice.id === 'lexend' ? 'Lexend, sans-serif' : '"OpenDyslexic", "Comic Sans MS", sans-serif' }}><button className="font-card-main" disabled={!!processing} onClick={() => convert(choice.id)}><span className={`font-preview ${choice.id}`} aria-hidden="true">Aa</span><span className="font-card-copy"><strong className={`font-name ${choice.id}`}>{choice.name}</strong><small>{choice.detail}</small><i>{choice.sample}</i></span><span className="arrow">→</span></button><a className="font-info" href={`/font-sample/${choice.id}`} aria-label={`Read a sample in ${choice.name}`}><Info /></a></div>)}<div className="font-card all-card" style={{ fontFamily: '"Atkinson Hyperlegible", sans-serif' }}><button className="font-card-main" disabled={!!processing} onClick={() => convert('all')}><span className="font-preview all-preview"><Sparkles /></span><span className="font-card-copy"><strong>Generate all 3</strong><small>Try every font and choose your favorite</small><i>Three polished editions, one download</i></span><span className="arrow">→</span></button></div></div>
       {processing && <div className="processing"><LoaderCircle className="spinner" /><div><strong>{progress}</strong><span>This usually takes less than a minute. Please keep this tab open.</span></div></div>}
       {results.length > 0 && <div className="results"><div className="results-heading"><div><span className="success-dot"><Check /></span><h2>Your ebook is ready</h2><p>Your download started automatically. Your files remain in this browser session only.</p></div><div className="result-actions">{results.map(result => <a className="button primary" href={result.url} download={result.name} key={result.name}><Download data-icon="inline-start" /> {results.length > 1 ? result.font : 'Download ebook'}</a>)}</div></div><p className="hash-note">Revisit these files any time using your hash link: <code>{results[0].url.split('hash=')[1]?.split('&')[0]}</code></p></div>}
     </section>
