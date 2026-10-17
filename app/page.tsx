@@ -1,7 +1,7 @@
 'use client'
 
-import JSZip from 'jszip'
 import { useRef, useState } from 'react'
+import { FONT_FAMILIES, formatEpub } from '../lib/ebook-formatter'
 import { Check, Download, FileArchive, FileText, Heart, Info, LoaderCircle, LockKeyhole, Sparkles, Upload, X } from 'lucide-react'
 
 type FontChoice = 'atkinson' | 'opendyslexic' | 'lexend' | 'all'
@@ -33,26 +33,13 @@ export default function Home() {
     if (!file) return
     setError(''); setProcessing(font); setProgress(font === 'all' ? 'Preparing three accessible editions…' : 'Inspecting your ebook…')
     try {
-      const source = await JSZip.loadAsync(await file.arrayBuffer())
-      const entries = Object.keys(source.files)
-      if (!entries.includes('mimetype') || !entries.includes('META-INF/container.xml')) throw new Error('That file is not a valid EPUB book.')
-      const names = { atkinson: 'Atkinson Hyperlegible', opendyslexic: 'OpenDyslexic', lexend: 'Lexend' } as const
-      const selected = font === 'all' ? (Object.keys(names) as Exclude<FontChoice, 'all'>[]) : [font]
+      if (outputFormat === 'azw3') throw new Error('AZW3/KF8 output is not available in this browser-only build yet. Choose EPUB for a working conversion.')
+      const selected = font === 'all' ? (Object.keys(FONT_FAMILIES) as Exclude<FontChoice, 'all'>[]) : [font]
       const outputs: Result[] = []
       for (const key of selected) {
-        setProgress(`Applying ${names[key]} to every page…`)
-        const zip = await JSZip.loadAsync(await file.arrayBuffer())
-        const css = `\\n/* Dyslexify local edition */\\nhtml, body, body * { font-family: '${names[key]}', sans-serif !important; }\\n`
-        for (const path of Object.keys(zip.files)) {
-          if (zip.files[path].dir || !/\\.(x?html?|css)$/i.test(path)) continue
-          const entry = zip.file(path); if (!entry) continue
-          const original = await entry.async('string')
-          zip.file(path, path.toLowerCase().endsWith('.css') ? original + css : original.replace(/<head([^>]*)>/i, `<head$1><style>${css}</style>`))
-        }
-        const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' })
-        const url = URL.createObjectURL(blob)
-        const extension = outputFormat === 'azw3' ? 'azw3' : 'epub'
-        outputs.push({ name: `${file.name.replace(/\.epub$/i, '')} — ${names[key]}.${extension}`, url, font: names[key] })
+        const ebook = await formatEpub(await file.arrayBuffer(), { font: key, onProgress: setProgress })
+        const url = URL.createObjectURL(ebook.blob)
+        outputs.push({ name: `${file.name.replace(/\\.epub$/i, '')} — ${FONT_FAMILIES[key]}.epub`, url, font: FONT_FAMILIES[key] })
       }
       setResults(outputs)
       outputs.forEach((item, index) => setTimeout(() => { const link = document.createElement('a'); link.href = item.url; link.download = item.name; link.click() }, index * 700))
