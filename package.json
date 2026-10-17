@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@mdgate/mobi": "^0.6.25",
     "jszip": "^3.10.1",
     "lucide-react": "^0.468.0",
     "next": "^16.0.0",
