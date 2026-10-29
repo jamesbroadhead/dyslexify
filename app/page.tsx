@@ -128,6 +128,6 @@ export default function Home() {
       {processing && <div className="processing"><LoaderCircle className="spinner" /><div><strong>{progress}</strong><span>Your EPUB and font files stay in this browser. Keep this tab open.</span></div></div>}
       {results.length > 0 && <div className="results"><div className="results-heading"><div><span className="success-dot"><Check /></span><h2>Your Kindle book is ready</h2><p>Your AZW3 download started. Your files remain in this browser session only.</p></div><div className="result-actions">{results.map(result => <a className="button primary" href={result.url} download={result.name} key={result.name}><Download data-icon="inline-start" /> {results.length > 1 ? result.font : 'Download AZW3'}</a>)}</div></div></div>}
     </section>
-    <footer><span><Heart /> Made for more comfortable reading</span><span><a href="/faq">FAQ</a><a href="/terms">Terms</a><span>EPUB in · Kindle AZW3 out</span></span></footer>
+    <footer><span><Heart /> Made for more comfortable reading</span><span><a href="/faq">FAQ</a><a href="/terms">Terms</a><span>EPUB in · Kindle AZW3 out</span><span>build <code data-build-sha>{process.env.NEXT_PUBLIC_GIT_SHA}</code></span></span></footer>
   </main>
 }

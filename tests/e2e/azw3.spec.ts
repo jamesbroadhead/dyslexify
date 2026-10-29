@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import JSZip from 'jszip'
+import { execFileSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 
 async function minimalEpub() {
@@ -27,6 +28,8 @@ test('builds a Kindle AZW3 with an embedded selected font entirely in the browse
   })
 
   await page.goto('/')
+  const expectedSha = (process.env.VERCEL_GIT_COMMIT_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' })).slice(0, 12)
+  await expect(page.locator('[data-build-sha]')).toHaveText(expectedSha)
   await page.locator('input[type=file]').setInputFiles({
     name: 'browser-conversion-test.epub',
     mimeType: 'application/epub+zip',
